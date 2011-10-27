@@ -1,0 +1,3 @@
+beep - beep your PC speaker
+
+The beep is a program to beep your PC speaker by writing '\a' to /dev/console.
