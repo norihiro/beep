@@ -1,3 +1,4 @@
+#include "config.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -15,19 +16,47 @@ int randmm(int min, int max)
 	return min+(int)((long long)random()*(max-min+1)/RAND_MAX);
 }
 
+int check_pcspkr()
+{
+	FILE *fp = fopen("/proc/modules", "r");
+	if(fp) {
+		int ret=1;
+		char line[128];
+		while(fgets(line, sizeof(line)-1, fp)) {
+			if(strncmp(line, "pcspkr ", 7)==0) {
+				ret = 0;
+				break;
+			}
+		}
+		fclose(fp);
+		return ret;
+	}
+	return -1;
+}
+
 main(int argc, char **argv)
 {
 	int i, c;
 	FILE * fp = 0;
 	int digit_optind = 0;
+	uid_t uid = getuid();
+	setuid(0);
+
+#ifdef ENABLE_INSPCSPKR
+	if(check_pcspkr()==1) {
+		system("/sbin/modprobe pcspkr");
+	}
+#endif
 
 	/* open console */
 	out=fopen("/dev/console", "w");
-	if(!out)
+	if(!out) {
+		fputs("error: cannot open /dev/console\n", stderr);
 		return __LINE__;
+	}
 
 	/* restore UID */
-	setuid(getuid());
+	setuid(uid);
 
 	srandom(getpid());
 
